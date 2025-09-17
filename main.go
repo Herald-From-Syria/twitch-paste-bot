@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gempir/go-twitch-irc/v4"
 	"github.com/joho/godotenv"
@@ -182,12 +183,14 @@ func processCommand(client *twitch.Client, message twitch.PrivateMessage, comman
 
 	// Поиск команды в конфигурации
 	if response, exists := commands[cmd]; exists {
+		time.Sleep(1 * time.Second)
 		client.Say(channel, response)
 		slog.Info("Команда выполнена", "user", message.User.Name, "command", cmd, "response", response)
 	} else {
 		slog.Debug("Неизвестная команда", "command", cmd, "user", message.User.Name)
 		// Отправляем сообщение о неизвестной команде
 		if strings.ToLower(getEnv("MENTION_ONLY", "false")) == "true" {
+			time.Sleep(1 * time.Second)
 			client.Say(channel, fmt.Sprintf("@%s Неизвестная команда. Используйте !commands для списка команд.", message.User.Name))
 		}
 	}
