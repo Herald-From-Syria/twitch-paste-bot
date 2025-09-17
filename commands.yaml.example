@@ -1,0 +1,3 @@
+messages:
+  - command: "!ping"
+    text: pong
