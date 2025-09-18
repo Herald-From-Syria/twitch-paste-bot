@@ -176,7 +176,7 @@ func (b *Bot) processCommand(message twitch.PrivateMessage) {
 		// Устанавливаем глобальный cooldown перед отправкой ответа
 		b.cooldown.Use()
 
-		b.client.Say(b.channel, response)
+		b.client.Reply(b.channel, message.ID, response)
 		slog.Info("Команда выполнена",
 			"user", message.User.Name,
 			"command", cmd,
@@ -185,7 +185,7 @@ func (b *Bot) processCommand(message twitch.PrivateMessage) {
 		slog.Debug("Неизвестная команда", "command", cmd, "user", message.User.Name)
 		// Отправляем сообщение о неизвестной команде (без cooldown для этого сообщения)
 		if strings.ToLower(getEnv("MENTION_ONLY", "false")) == "true" {
-			b.client.Say(b.channel, fmt.Sprintf("@%s Неизвестная команда. Используйте !пасты для списка команд.", message.User.Name))
+			b.client.Reply(b.channel, message.ID, fmt.Sprintf("@%s Неизвестная команда. Используйте !пасты для списка команд.", message.User.Name))
 		}
 	}
 }
