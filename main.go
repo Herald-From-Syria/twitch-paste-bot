@@ -32,6 +32,42 @@ type CommandsConfig struct {
 	Messages []Command `yaml:"messages"`
 }
 
+// Структура для отслеживания глобального cooldown
+type GlobalCooldownManager struct {
+	mu       sync.Mutex
+	lastUsed time.Time
+	duration time.Duration
+}
+
+func NewGlobalCooldownManager(duration time.Duration) *GlobalCooldownManager {
+	return &GlobalCooldownManager{
+		duration: duration,
+	}
+}
+
+func (gcm *GlobalCooldownManager) CanUse() bool {
+	gcm.mu.Lock()
+	defer gcm.mu.Unlock()
+
+	return time.Since(gcm.lastUsed) >= gcm.duration
+}
+
+func (gcm *GlobalCooldownManager) Use() {
+	gcm.mu.Lock()
+	defer gcm.mu.Unlock()
+
+	gcm.lastUsed = time.Now()
+}
+
+type Bot struct {
+	client      *twitch.Client
+	commands    map[string]string
+	cooldown    *GlobalCooldownManager
+	botUsername string
+	channel     string
+	mentionOnly bool
+}
+
 func main() {
 	// Загрузка переменных окружения
 	if err := godotenv.Load(); err != nil {
@@ -45,8 +81,11 @@ func main() {
 	oauthToken := getEnv("TWITCH_OAUTH_TOKEN", "")
 	channel := getEnv("TWITCH_CHANNEL", "")
 
-	// Новый параметр: отвечать только на упоминания
+	// Параметр: отвечать только на упоминания
 	mentionOnly := strings.ToLower(getEnv("MENTION_ONLY", "false")) == "true"
+
+	// Параметр cooldown в секундах (по умолчанию 15 секунд)
+	cooldownSeconds := getEnvInt("COOLDOWN_SECONDS", 15)
 
 	if botUsername == "" || oauthToken == "" || channel == "" {
 		slog.Error("Не все обязательные переменные окружения заданы")
@@ -63,32 +102,32 @@ func main() {
 	// Добавляем команду для вывода всех зарегистрированных команд
 	commands["!пасты"] = getAllCommandsText(commands)
 
+	// Создание менеджера глобального cooldown
+	cooldownManager := NewGlobalCooldownManager(time.Duration(cooldownSeconds) * time.Second)
+
+	// Создание бота
+	bot := &Bot{
+		commands:    commands,
+		cooldown:    cooldownManager,
+		botUsername: botUsername,
+		channel:     channel,
+		mentionOnly: mentionOnly,
+	}
+
 	// Создание клиента
 	client := twitch.NewClient(botUsername, oauthToken)
+	bot.client = client
 
 	// Обработчик сообщений
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
-		// Проверяем, нужно ли отвечать только на упоминания
-		if mentionOnly {
-			// Режим "только упоминания" - отвечаем только если есть @botname
-			if strings.Contains(message.Message, "@"+botUsername) {
-				processCommand(client, message, commands, channel, botUsername)
-			}
-		} else {
-			// Режим "все команды" - отвечаем на упоминания и прямые команды
-			botMentioned := strings.Contains(message.Message, "@"+botUsername)
-			directCommand := strings.HasPrefix(strings.TrimSpace(message.Message), "!")
-
-			if botMentioned || directCommand {
-				processCommand(client, message, commands, channel, botUsername)
-			}
-		}
+		bot.handleMessage(message)
 	})
 
 	slog.Info("Бот запущен",
 		"channel", channel,
 		"bot_username", botUsername,
-		"mention_only", mentionOnly)
+		"mention_only", mentionOnly,
+		"cooldown_seconds", cooldownSeconds)
 
 	// Подключение к каналу
 	client.Join(channel)
@@ -100,6 +139,65 @@ func main() {
 	}
 
 	lastMessageTime.Set(time.Now())
+}
+
+func (b *Bot) handleMessage(message twitch.PrivateMessage) {
+	// Проверяем глобальный cooldown
+	if !b.cooldown.CanUse() {
+		slog.Debug("Бот в cooldown")
+		return
+	}
+
+	// Проверяем, нужно ли отвечать только на упоминания
+	if b.mentionOnly {
+		// Режим "только упоминания" - отвечаем только если есть @botname
+		if strings.Contains(message.Message, "@"+b.botUsername) {
+			b.processCommand(message)
+		}
+	} else {
+		// Режим "все команды" - отвечаем на упоминания и прямые команды
+		botMentioned := strings.Contains(message.Message, "@"+b.botUsername)
+		directCommand := strings.HasPrefix(strings.TrimSpace(message.Message), "!")
+
+		if botMentioned || directCommand {
+			b.processCommand(message)
+		}
+	}
+}
+
+func (b *Bot) processCommand(message twitch.PrivateMessage) {
+	// Удаление упоминания бота из сообщения для извлечения команды
+	cleanMessage := strings.TrimSpace(strings.Replace(message.Message, "@"+b.botUsername, "", 1))
+
+	if message.User.Name == b.botUsername {
+		time.Sleep(1 * time.Second)
+	}
+
+	// Извлечение команды
+	commandParts := strings.Fields(cleanMessage)
+	if len(commandParts) == 0 {
+		return
+	}
+
+	cmd := commandParts[0]
+
+	// Поиск команды в конфигурации
+	if response, exists := b.commands[cmd]; exists {
+		// Устанавливаем глобальный cooldown перед отправкой ответа
+		b.cooldown.Use()
+
+		b.client.Reply(b.channel, message.ID, response)
+		slog.Info("Команда выполнена",
+			"user", message.User.Name,
+			"command", cmd,
+			"response", response)
+	} else {
+		slog.Debug("Неизвестная команда", "command", cmd, "user", message.User.Name)
+		// Отправляем сообщение о неизвестной команде (без cooldown для этого сообщения)
+		if strings.ToLower(getEnv("MENTION_ONLY", "false")) == "true" {
+			b.client.Reply(b.channel, message.ID, fmt.Sprintf("@%s Неизвестная команда. Используйте !пасты для списка команд.", message.User.Name))
+		}
+	}
 }
 
 func setupLogging() {
@@ -145,6 +243,21 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func getEnvInt(key string, defaultValue int) int {
+	valueStr := getEnv(key, "")
+	if valueStr == "" {
+		return defaultValue
+	}
+
+	var result int
+	_, err := fmt.Sscanf(valueStr, "%d", &result)
+	if err != nil {
+		return defaultValue
+	}
+
+	return result
 }
 
 func loadCommands(filename string) (map[string]string, error) {
