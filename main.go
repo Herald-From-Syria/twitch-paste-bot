@@ -7,12 +7,21 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gempir/go-twitch-irc/v4"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 )
+
+var lastMessageTime LastMessageTime
+
+// Интервал между сообщениями. Можно с настроек канала получить, если такие есть
+const sleepTime = time.Second
+
+// Интервал между проверками возможности отправки сообщения
+const wakeUpTime = 100 * time.Millisecond
 
 type Command struct {
 	Command string `yaml:"command"`
@@ -89,6 +98,8 @@ func main() {
 	if err != nil {
 		slog.Error("Ошибка подключения", "error", err)
 	}
+
+	lastMessageTime.Set(time.Now())
 }
 
 func setupLogging() {
@@ -183,15 +194,46 @@ func processCommand(client *twitch.Client, message twitch.PrivateMessage, comman
 
 	// Поиск команды в конфигурации
 	if response, exists := commands[cmd]; exists {
-		time.Sleep(1 * time.Second)
+		Sleep()
 		client.Say(channel, response)
+		lastMessageTime.Set(time.Now())
 		slog.Info("Команда выполнена", "user", message.User.Name, "command", cmd, "response", response)
 	} else {
 		slog.Debug("Неизвестная команда", "command", cmd, "user", message.User.Name)
 		// Отправляем сообщение о неизвестной команде
 		if strings.ToLower(getEnv("MENTION_ONLY", "false")) == "true" {
-			time.Sleep(1 * time.Second)
+			Sleep()
 			client.Say(channel, fmt.Sprintf("@%s Неизвестная команда. Используйте !commands для списка команд.", message.User.Name))
+			lastMessageTime.Set(time.Now())
 		}
+	}
+}
+
+// Храним время последнего сообщения
+type LastMessageTime struct {
+	sync.RWMutex
+	time time.Time
+}
+
+// Set устанавливает новое значение времени
+func (l *LastMessageTime) Set(t time.Time) {
+	l.Lock()
+	defer l.Unlock()
+	l.time = t
+}
+
+// Set устанавливает новое значение времени
+func (l *LastMessageTime) Get() time.Time {
+	l.Lock()
+	defer l.Unlock()
+	return l.time
+}
+
+func Sleep() {
+	if time_span := time.Since(lastMessageTime.Get()); time_span < sleepTime {
+		time.Sleep(wakeUpTime)
+		Sleep()
+	} else {
+		return
 	}
 }
