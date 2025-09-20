@@ -159,10 +159,6 @@ func (b *Bot) processCommand(message twitch.PrivateMessage) {
 	// Удаление упоминания бота из сообщения для извлечения команды
 	cleanMessage := strings.TrimSpace(strings.Replace(message.Message, "@"+b.botUsername, "", 1))
 
-	if message.User.Name == b.botUsername {
-		time.Sleep(1 * time.Second)
-	}
-
 	// Извлечение команды
 	commandParts := strings.Fields(cleanMessage)
 	if len(commandParts) == 0 {
@@ -176,7 +172,13 @@ func (b *Bot) processCommand(message twitch.PrivateMessage) {
 		// Устанавливаем глобальный cooldown перед отправкой ответа
 		b.cooldown.Use()
 
-		b.client.Reply(b.channel, message.ID, response)
+		if message.User.Name == b.botUsername {
+			b.client.Say(b.channel, response)
+			time.Sleep(1 * time.Second)
+		} else {
+			b.client.Reply(b.channel, message.ID, response)
+		}
+
 		slog.Info("Команда выполнена",
 			"user", message.User.Name,
 			"command", cmd,
