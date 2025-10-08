@@ -47,3 +47,5 @@ messages:
     text: wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie  wideNessie
   - command: "!хит"
     text: wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ
+  - command: "!донат"
+    text: Вот тебе рубли argument Вот тебе долларс doubleArgument А это еврос podarok А также гривны mcopDULYA И целый биток Rasengan На сдачу подарочных подписок Otchetus И бонус - баннер под стрим CopusFig
