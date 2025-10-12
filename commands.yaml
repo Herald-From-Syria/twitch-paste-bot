@@ -33,8 +33,6 @@ messages:
     text: ой дела появились Jokerge bye ой дела появились Jokerge bye ой дела появились Jokerge bye ой дела появились Jokerge bye ой дела появились Jokerge bye
   - command: "!lickOtira"
     text: "lickR Otira_ lickL"
-  - command: "!чатмодеров"
-    text: пиздец, чат ощущается как тот самый стрим на 5 зрилов где у всех модерка damn
   - command: "!пытка"
     text: Каждая секунда с вами это пытка McopChad Миллионы лет эволюции чтобы ты высрал такое McopChad С вами ебанатами играть невероятно впадлу McopChad Почему ты со мной пытаешься разговаривать, ты же отсталый McopChad Ты же ебаная бибизяна нахуй ты свой пиздак открываешь McopChad
   - command: "!авуга"
@@ -49,3 +47,5 @@ messages:
     text: wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ wideNessie ХИТ ЗА ХИТОМ
   - command: "!донат"
     text: Вот тебе рубли argument Вот тебе долларс doubleArgument А это еврос podarok А также гривны mcopDULYA И целый биток Rasengan На сдачу подарочных подписок Otchetus И бонус - баннер под стрим CopusFig
+  - command: "!стрим"
+    text: Ладно у тебя стрим интересный Jokerge На фул ахуе тебя оставлю Jokerge Так ты бездарь, я для тебя регать не буду Jokerge Ща, я посру и приду Jokerge Так это мета сейчас видосы смотреть Jokerge Я голодный го видос под хрючево посмотрим Jokerge Я в туалет Jokerge
