@@ -14,7 +14,7 @@ messages:
   - command: "!лес"
     text: Троллей бояться, в лес не ходить derevo Семь раз в лес, один посаппорть derevo Горбатого лес исправит derevo Все дороги ведут в лес derevo на линии хорошо, а в лесу лучше derevo Чем дальше в лес, тем больше дерево derevo Кто в лес ходил, тот в цирке не смеётся derevo Сколько саппорта не корми, он всё равно в лес смотрит derevo Один в лесу не воин, а лесник derevo Кто не сажал дерев, тот в лесу не фармит derevo Кто старое помянет, того из леса вон derevo Лес лесу рознь derevo
   - command: "!правила"
-    text: На данном стриме действуют следующие правила: за вопросы БАН xyliNado за советы БАН xyliNado за слова БАН xyliNado за буквы БАН xyliNado писать в чат БАН xyliNado за БАН тоже БАН xyliNado
+    text: "На данном стриме действуют следующие правила: за вопросы БАН xyliNado за советы БАН xyliNado за слова БАН xyliNado за буквы БАН xyliNado писать в чат БАН xyliNado за БАН тоже БАН xyliNado"
   - command: "!фритато"
     text: фри pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance тато pudgeDance
   - command: "!прячем"
